@@ -178,7 +178,7 @@ export default function Shopping() {
                 <div className="p-3 bg-teal-500/20 rounded-xl">
                   <ShoppingCart className="w-6 h-6 text-teal-400" />
                 </div>
-                <h1 className="text-4xl font-bold text-white bg-gradient-to-r from-white to-teal-200 bg-clip-text text-transparent">
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-teal-200 bg-clip-text text-transparent">
                   Shopping List
                 </h1>
               </div>

@@ -1,107 +1,99 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from 'react'
-import { Sun, Moon, Check, Calendar } from 'lucide-react'
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { useState, useEffect } from "react";
+import { Sun, Moon, Check, Calendar } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { addNamaz, getNamazHistory, getTodayNamaz } from "@/util/endPoints/namaz";
 
-// Define prayers with icon metadata instead of JSX elements
+// Prayer definitions
 const PRAYERS = [
-  { id: 1, name: 'Fajr', iconType: 'Sun', iconClass: 'w-6 h-6 text-amber-400' },
-  { id: 2, name: 'Zuhr', iconType: 'Sun', iconClass: 'w-6 h-6 text-yellow-400' },
-  { id: 3, name: 'Asr', iconType: 'Sun', iconClass: 'w-6 h-6 text-orange-400' },
-  { id: 4, name: 'Maghrib', iconType: 'Sun', iconClass: 'w-6 h-6 text-red-400' },
-  { id: 5, name: 'Isha', iconType: 'Moon', iconClass: 'w-6 h-6 text-indigo-400' }
-]
+  { id: 1, name: "fajr", iconType: "Sun", iconClass: "w-6 h-6 text-amber-400" },
+  { id: 2, name: "zuhr", iconType: "Sun", iconClass: "w-6 h-6 text-yellow-400" },
+  { id: 3, name: "asar", iconType: "Sun", iconClass: "w-6 h-6 text-orange-400" },
+  { id: 4, name: "maghrib", iconType: "Sun", iconClass: "w-6 h-6 text-red-400" },
+  { id: 5, name: "isha", iconType: "Moon", iconClass: "w-6 h-6 text-indigo-400" },
+];
 
-// Map iconType to actual React component
-const iconComponents = {
-  Sun,
-  Moon
-}
+const iconComponents = { Sun, Moon };
 
 export default function Namaz() {
-  const [prayers, setPrayers] = useState(() => {
-    const storedPrayers = JSON.parse(localStorage.getItem('prayers'))
-    return storedPrayers || PRAYERS.map(prayer => ({
-      ...prayer,
-      completed: false,
-      date: new Date().toISOString().split('T')[0]
-    }))
-  })
-  const [prayerHistory, setPrayerHistory] = useState(() =>
-    JSON.parse(localStorage.getItem('prayerHistory')) || []
-  )
+  const [namaz, setNamaz] = useState({
+    fajr: false,
+    zuhr: false,
+    asar: false,
+    maghrib: false,
+    isha: false,
+  });
 
-  // Check for new day and reset prayers if needed
-  useEffect(() => {
-    const checkDayChange = () => {
-      const today = new Date().toISOString().split('T')[0]
-      const storedDate = prayers[0]?.date || today
+  const [prayerHistory, setPrayerHistory] = useState([]);
 
-      if (today !== storedDate) {
-        // Add previous day's data to history
-        const completedCount = prayers.filter(p => p.completed).length
-        setPrayerHistory(prev => [{
-          date: storedDate,
-          completedCount
-        }, ...prev])
-
-        // Reset prayers for new day
-        setPrayers(PRAYERS.map(prayer => ({
-          ...prayer,
-          completed: false,
-          date: today
-        })))
+  // Fetch today's namaz
+  async function fetchTodayNamaz() {
+    try {
+      const res = await getTodayNamaz();
+      if (res?.data) {
+        setNamaz({
+          fajr: res.data.fajr || false,
+          zuhr: res.data.zuhr || false,
+          asar: res.data.asar || false,
+          maghrib: res.data.maghrib || false,
+          isha: res.data.isha || false,
+        });
       }
+    } catch (err) {
+      console.error("Error fetching today's namaz:", err);
     }
+  }
 
-    // Run immediately and then every minute
-    checkDayChange()
-    const interval = setInterval(checkDayChange, 60000)
-    return () => clearInterval(interval)
-  }, [prayers])
+  // Fetch full history
+  async function fetchNamazHistory() {
+    try {
+      const res = await getNamazHistory();
+      if (res?.data) {
+        setPrayerHistory(res.data);
+      }
+    } catch (err) {
+      console.error("Error fetching namaz history:", err);
+    }
+  }
 
-  // Save to localStorage whenever prayers or history change
   useEffect(() => {
-    localStorage.setItem('prayers', JSON.stringify(prayers))
-    localStorage.setItem('prayerHistory', JSON.stringify(prayerHistory))
-  }, [prayers, prayerHistory])
+    fetchTodayNamaz();
+    fetchNamazHistory();
+  }, []);
 
-  // Toggle prayer completion
-  const togglePrayer = (id) => {
-    setPrayers(prev => prev.map(prayer => 
-      prayer.id === id ? { ...prayer, completed: !prayer.completed } : prayer
-    ))
-  }
+  // Toggle a prayer
+  const togglePrayer = async (prayer) => {
+    const newValue = !namaz[prayer.name];
+    setNamaz((prev) => ({ ...prev, [prayer.name]: newValue }));
 
-  // Format date for display
-  const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      weekday: 'long',
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    })
-  }
+    try {
+      await addNamaz({ prayerName: prayer.name, value: newValue });
+      fetchTodayNamaz();
+      fetchNamazHistory();
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
-  // Render icon dynamically
-  const renderIcon = (iconType, iconClass) => {
-    const IconComponent = iconComponents[iconType]
-    return IconComponent ? <IconComponent className={iconClass} /> : null
-  }
+  const formatDate = (date) =>
+    new Date(date).toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+
+  const renderIcon = (type, cls) => {
+    const Icon = iconComponents[type];
+    return Icon ? <Icon className={cls} /> : null;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-1 to-slate-900 p-4 md:p-6">
-      {/* Background decoration */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-20 w-72 h-72 bg-teal-500/5 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 right-20 w-72 h-72 bg-cyan-500/5 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-400/3 rounded-full blur-3xl"></div>
-      </div>
-
       <div className="max-w-7xl mx-auto relative z-10 flex flex-col lg:flex-row gap-8">
-        {/* Prayer Cards Section */}
+        {/* Prayer Cards */}
         <div className="flex-1">
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-2">
@@ -112,19 +104,18 @@ export default function Namaz() {
                 Daily Namaz
               </h1>
             </div>
-            <p className="text-slate-400">
-              Track your five daily prayers
-            </p>
+            <p className="text-slate-400">Track your five daily prayers</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {prayers.map(prayer => (
+            {PRAYERS.map((prayer) => (
               <Card
                 key={prayer.id}
-                className={`relative bg-slate-800/50 backdrop-blur-md border rounded-xl transition-all duration-300 hover:shadow-lg ${
-                  prayer.completed 
-                    ? 'border-teal-500/50 bg-teal-500/10 shadow-teal-500/20' 
-                    : 'border-slate-700/50 hover:border-teal-500/30'
+                onClick={() => togglePrayer(prayer)}
+                className={`cursor-pointer relative bg-slate-800/50 backdrop-blur-md border rounded-xl transition-all duration-300 hover:shadow-lg ${
+                  namaz[prayer.name]
+                    ? "border-teal-500/50 bg-teal-500/10 shadow-teal-500/20"
+                    : "border-slate-700/50 hover:border-teal-500/30"
                 }`}
               >
                 <CardContent className="p-6">
@@ -133,38 +124,36 @@ export default function Namaz() {
                       {renderIcon(prayer.iconType, prayer.iconClass)}
                     </div>
                     <div className="flex-1">
-                      <h3 className={`text-lg font-semibold mb-1 ${
-                        prayer.completed ? 'text-teal-400' : 'text-white'
-                      }`}>
+                      <h3
+                        className={`text-lg font-semibold mb-1 ${
+                          namaz[prayer.name] ? "text-teal-400" : "text-white"
+                        }`}
+                      >
                         {prayer.name}
                       </h3>
                       <p className="text-slate-400 text-sm">
-                        {prayer.completed ? 'Completed' : 'Not yet prayed'}
+                        {namaz[prayer.name] ? "Completed" : "Not yet prayed"}
                       </p>
                     </div>
-                    <Button
+                    {/* <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => togglePrayer(prayer.id)}
                       className={`${
-                        prayer.completed
-                          ? 'bg-teal-500/30 text-teal-400'
-                          : 'bg-slate-700/50 text-slate-400 hover:bg-teal-500/20 hover:text-teal-400'
+                        namaz[prayer.name]
+                          ? "bg-teal-500/30 text-teal-400"
+                          : "bg-slate-700/50 text-slate-400"
                       }`}
                     >
                       <Check className="w-5 h-5" />
-                    </Button>
+                    </Button> */}
                   </div>
-                  {prayer.completed && (
-                    <div className="absolute inset-0 rounded-xl border-2 border-teal-400/40 animate-pulse pointer-events-none"></div>
-                  )}
                 </CardContent>
               </Card>
             ))}
           </div>
         </div>
 
-        {/* Prayer History Section */}
+        {/* History */}
         <div className="lg:w-80 xl:w-96">
           <div className="sticky top-6">
             <div className="flex items-center gap-3 mb-4">
@@ -184,31 +173,36 @@ export default function Namaz() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {prayerHistory.map((entry, index) => (
-                      <Card
-                        key={index}
-                        className="p-3 bg-slate-700/30 border-slate-600/50"
-                      >
-                        <CardContent className="p-0 flex items-center justify-between">
-                          <div>
-                            <p className="text-sm text-white">{formatDate(entry.date)}</p>
-                            <p className="text-xs text-teal-400">
-                              Prayed {entry.completedCount} of 5 namaz
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            {[...Array(5)].map((_, i) => (
-                              <div
-                                key={i}
-                                className={`w-2 h-2 rounded-full ${
-                                  i < entry.completedCount ? 'bg-teal-400' : 'bg-slate-600'
-                                }`}
-                              />
-                            ))}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                    {prayerHistory.map((entry, idx) => {
+                      const completedCount =
+                        ["fajr", "zuhr", "asar", "maghrib", "isha"].filter(
+                          (p) => entry[p]
+                        ).length;
+                      return (
+                        <Card key={idx} className="p-3 bg-slate-700/30 border-slate-600/50">
+                          <CardContent className="p-0 flex items-center justify-between">
+                            <div>
+                              <p className="text-sm text-white">{formatDate(entry.date)}</p>
+                              <p className="text-xs text-teal-400">
+                                Prayed {completedCount} of 5 namaz
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              {[...Array(5)].map((_, i) => (
+                                <div
+                                  key={i}
+                                  className={`w-2 h-2 rounded-full ${
+                                    i < completedCount
+                                      ? "bg-teal-400"
+                                      : "bg-slate-600"
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>
@@ -217,5 +211,5 @@ export default function Namaz() {
         </div>
       </div>
     </div>
-  )
+  );
 }

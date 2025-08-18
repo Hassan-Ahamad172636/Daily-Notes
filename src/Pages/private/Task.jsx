@@ -152,7 +152,7 @@ export default function Task() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-4xl font-bold text-white mb-2 bg-gradient-to-r from-white to-teal-200 bg-clip-text text-transparent">
+              <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-white to-teal-200 bg-clip-text text-transparent">
                 Daily Tasks
               </h1>
               <p className="text-slate-400">Organize and track your daily activities</p>

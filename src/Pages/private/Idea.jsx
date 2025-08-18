@@ -318,7 +318,7 @@ export default function Idea() {
                 <div className="p-3 bg-teal-500/20 rounded-xl">
                   <Lightbulb className="w-6 h-6 text-teal-400" />
                 </div>
-                <h1 className="text-4xl font-bold text-white bg-gradient-to-r from-white to-teal-200 bg-clip-text text-transparent">
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-teal-200 bg-clip-text text-transparent">
                   Ideas
                 </h1>
               </div>

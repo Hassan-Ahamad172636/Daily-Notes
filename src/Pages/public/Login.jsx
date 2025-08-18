@@ -7,24 +7,49 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Eye, EyeOff, Mail, Lock, ArrowRight, Github, Chrome } from "lucide-react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { toast } from "sonner"
+import { login } from "@/util/endPoints/user"
+import { Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [rememberMe, setRememberMe] = useState(false)
+  const navigate = useNavigate()
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
+    setLoading(true)
     e.preventDefault()
     // Handle login logic here
-    if(!email || !password) {
-      console.log('Email and password are required!');
-      
-      toast.warning('Email and password are required!')
+    try {      
+      if (!email || !password) {
+        toast.warning('Email and password are required!')
+        setLoading(false)
+        return;
+      }
+  
+      let data = {
+        email: email,
+        password: password
+      }
+  
+      const response = await login(data)
+  
+      if (response.success) {
+        setLoading(false)
+        localStorage.setItem('token', response.data.token)
+        navigate('/')
+        toast.success('User login!')
+      }
+    } catch (error) {
+      toast.error(error.response.data.message)
+      setLoading(false)
+      return
     }
-    console.log("Login attempt:", { email, password, rememberMe })
+
   }
 
   return (
@@ -106,11 +131,22 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              className="w-full cursor-pointer bg-teal-500 hover:bg-teal-600 text-white font-medium py-2.5 transition-all duration-200 group"
+              disabled={loading}
+              className="w-full cursor-pointer bg-teal-500 hover:bg-teal-600 text-white font-medium py-2.5 transition-all duration-200 group disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              Sign in
-              <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+              {loading ? (
+                <>
+                  <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                  Signing in...
+                </>
+              ) : (
+                <>
+                  Sign in
+                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
             </Button>
+
           </form>
 
           <div className="relative">

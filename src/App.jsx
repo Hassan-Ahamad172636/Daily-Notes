@@ -6,9 +6,6 @@ import LoginPage from './Pages/public/Login'
 import SignupPage from './Pages/public/Signup'
 import Home from './Pages/private/Home'
 import Chat from './Pages/private/Chat'
-
-import 'sonner'
-import './index.css' // make sure Tailwind is working
 import Task from './Pages/private/Task'
 import Namaz from './Pages/private/Namaz'
 import Income from './Pages/private/Income'
@@ -16,12 +13,17 @@ import Shopping from './Pages/private/shoping'
 import Idea from './Pages/private/Idea'
 import Schedule from './Pages/private/Schedule'
 
+import AuthGuard from '../src/guards/AuthGurad'
+import ForwardAuthGuard from './guards/ForwardAuthGuard'
+
+import './index.css'
+import LogoutButton from './util/Logout'
+
 function FloatingHomeButton() {
   const navigate = useNavigate()
   const location = useLocation()
 
-  // Hide button on "/" (home page) if desired
-  if (location.pathname === '/') return null
+  if (location.pathname === '/' || location.pathname === '/login' || location.pathname === '/sign-up') return null
 
   return (
     <button
@@ -38,22 +40,66 @@ function App() {
   return (
     <>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/sign-up" element={<SignupPage />} />
-        <Route path="/" element={<Home />} />
-        <Route path="/chat" element={<Chat />} />
-        <Route path="/task" element={<Task />} />
-        <Route path="/namaz" element={<Namaz />} />
-        <Route path="/income" element={<Income />} />
-        <Route path="/shoping" element={<Shopping />} />
-        <Route path="/ideas" element={<Idea />} />
-        <Route path="/schedule" element={<Schedule />} />
+        {/* Public Routes with ForwardAuth */}
+        <Route path="/login" element={
+          <ForwardAuthGuard>
+            <LoginPage />
+          </ForwardAuthGuard>
+        } />
+        <Route path="/sign-up" element={
+          <ForwardAuthGuard>
+            <SignupPage />
+          </ForwardAuthGuard>
+        } />
+
+        {/* Private Routes with AuthGuard */}
+        <Route path="/" element={
+          <AuthGuard>
+            <Home />
+          </AuthGuard>
+        } />
+        <Route path="/chat" element={
+          <AuthGuard>
+            <Chat />
+          </AuthGuard>
+        } />
+        <Route path="/task" element={
+          <AuthGuard>
+            <Task />
+          </AuthGuard>
+        } />
+        <Route path="/namaz" element={
+          <AuthGuard>
+            <Namaz />
+          </AuthGuard>
+        } />
+        <Route path="/income" element={
+          <AuthGuard>
+            <Income />
+          </AuthGuard>
+        } />
+        <Route path="/shoping" element={
+          <AuthGuard>
+            <Shopping />
+          </AuthGuard>
+        } />
+        <Route path="/ideas" element={
+          <AuthGuard>
+            <Idea />
+          </AuthGuard>
+        } />
+        <Route path="/schedule" element={
+          <AuthGuard>
+            <Schedule />
+          </AuthGuard>
+        } />
       </Routes>
 
+      <LogoutButton />
       {/* Floating Home Button */}
       <FloatingHomeButton />
 
-      {/* Toast Notifications */}
+      {/* Toasts */}
       <Toaster richColors position="top-right" />
     </>
   )

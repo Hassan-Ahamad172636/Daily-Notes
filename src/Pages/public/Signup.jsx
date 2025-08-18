@@ -23,23 +23,37 @@ import {
   Github,
   Chrome
 } from "lucide-react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { toast } from "sonner"
+import { signUP } from "@/util/endPoints/user"
 
 export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false)
-  const [name, setName] = useState("")
+  const [firstName, setFirstName] = useState("")
+  const [lastName, setLastName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!name || !email || !password) {
+    if (!firstName || !lastName || !email || !password) {
       toast.warning("All fields are required!")
       return
     }
 
-    console.log("Signup data:", { name, email, password })
+    let data = {
+      firstName, lastName, email, password
+    }
+
+    const response = await signUP(data)
+    
+    if(response.success) {
+      localStorage.setItem('token', response.data.token)
+      navigate('/')
+    }
+    
+    console.log("Signup data:", { firstName, lastName, email, password })
   }
 
   return (
@@ -61,14 +75,28 @@ export default function SignupPage() {
         <CardContent className="space-y-4">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-slate-300">Name</Label>
+              <Label htmlFor="firstName" className="text-slate-300">First Name</Label>
               <div className="relative">
                 <User className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                 <Input
-                  id="name"
-                  placeholder="Your name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  id="firstName"
+                  placeholder="Enter first name..."
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="lastName" className="text-slate-300">Last Name</Label>
+              <div className="relative">
+                <User className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                <Input
+                  id="lastName"
+                  placeholder="Enter last name..."
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
                   className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400"
                 />
               </div>
