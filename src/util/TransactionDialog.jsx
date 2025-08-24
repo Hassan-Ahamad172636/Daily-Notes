@@ -195,7 +195,7 @@ export default function AddTransactionDialog({ isOpen, onClose, selecteTransacti
         // recurring: newTransaction.recurring
       })
       // alert("Transaction added successfully!")
-      toast.success("Transaction added successfully!")
+      toast.success("Transaction updated successfully!")
       onClose();
       setNewTransaction({
         type: 'income',

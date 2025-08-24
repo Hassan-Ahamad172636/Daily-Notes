@@ -28,7 +28,7 @@ const LogoutButton = () => {
     </button>
 
     {dialogOpen && (
-    <ConfirmDialog onConfirm={handleLogout} onCancel={() => setDialogOpen(false)} title={'Logout'} message={'Are you sure!'}></ConfirmDialog>
+    <ConfirmDialog onConfirm={handleLogout} onCancel={() => setDialogOpen(false)} title={'Logout'} message={'Are you sure!'} isLogout={true}></ConfirmDialog>
     )}
     
     </>

@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import AddTransactionDialog from '../../util/TransactionDialog'
 import { getAllTransactions, removeTransactions } from '@/util/endPoints/transaction'
 import ConfirmDialog from '@/util/confirmatoin'
+import { toast } from 'sonner'
 
 const incomeCategories = ['job', 'freelance', 'investment', 'business', 'other']
 const expenseCategories = ['Housing', 'Food', 'Transportation', 'Bills', 'Entertainment', 'Healthcare', 'Shopping', 'Other']
@@ -70,6 +71,7 @@ export default function Income() {
   const handleDelete = async () => {
     // console.log(selectedTransaction)
     await removeTransactions(selectedTransaction._id)
+    toast.success('Transaction deleted successfully!')
     setDialogOpen(false);
     fetchTransaction();
   }

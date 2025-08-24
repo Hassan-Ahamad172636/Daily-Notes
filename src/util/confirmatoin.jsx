@@ -2,7 +2,7 @@ import React from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
-const ConfirmDialog = ({ title, message, onConfirm, onCancel }) => {
+const ConfirmDialog = ({ title, message, onConfirm, onCancel, isLogout }) => {
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center">
       <Card
@@ -19,7 +19,7 @@ const ConfirmDialog = ({ title, message, onConfirm, onCancel }) => {
               Cancel
             </Button>
             <Button className="cursor-pointer" variant="destructive" onClick={onConfirm}>
-              Delete
+              {isLogout? 'Logut' : 'Delete'}
             </Button>
           </div>
         </CardContent>
