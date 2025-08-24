@@ -185,7 +185,7 @@ export default function AddTransactionDialog({ isOpen, onClose, selecteTransacti
 
     try {
       setLoading(true)
-      await apiService.patchApi('/transaction/update', {
+      await apiService.patchApi('/transaction/update/' + selecteTransaction._id, {
         transactionType: newTransaction.type,
         transactionTitle: newTransaction.title,
         transactionAmount: parseFloat(newTransaction.amount),
