@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 const mockTasks = [
   {
@@ -65,7 +66,7 @@ const categoryColors = {
 
 export default function Task() {
   const [tasks, setTasks] = useState(mockTasks)
-  const [isAddingTask, setIsAddingTask] = useState(false)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingTask, setEditingTask] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterPriority, setFilterPriority] = useState('all')
@@ -77,6 +78,32 @@ export default function Task() {
     dueDate: '',
     category: 'Personal'
   })
+  const [error, setError] = useState('')
+
+  // Initialize dialog state when editing
+  const openDialog = (task = null) => {
+    if (task) {
+      setEditingTask(task)
+      setNewTask({
+        title: task.title,
+        description: task.description,
+        priority: task.priority,
+        dueDate: task.dueDate,
+        category: task.category
+      })
+    } else {
+      setEditingTask(null)
+      setNewTask({
+        title: '',
+        description: '',
+        priority: 'medium',
+        dueDate: '',
+        category: 'Personal'
+      })
+    }
+    setError('')
+    setIsDialogOpen(true)
+  }
 
   // Filter tasks based on search and filters
   const filteredTasks = tasks.filter(task => {
@@ -92,31 +119,47 @@ export default function Task() {
 
   // Add new task
   const addTask = () => {
-    if (newTask.title.trim()) {
-      const task = {
-        id: Date.now(),
-        ...newTask,
-        completed: false,
-        createdAt: new Date().toISOString().split('T')[0]
-      }
-      setTasks([task, ...tasks])
-      setNewTask({
-        title: '',
-        description: '',
-        priority: 'medium',
-        dueDate: '',
-        category: 'Personal'
-      })
-      setIsAddingTask(false)
+    if (!newTask.title.trim()) {
+      setError('Task title is required')
+      return
     }
+    const task = {
+      id: Date.now(),
+      ...newTask,
+      completed: false,
+      createdAt: new Date().toISOString().split('T')[0]
+    }
+    setTasks([task, ...tasks])
+    setIsDialogOpen(false)
+    setNewTask({
+      title: '',
+      description: '',
+      priority: 'medium',
+      dueDate: '',
+      category: 'Personal'
+    })
+    setError('')
   }
 
   // Update task
-  const updateTask = (id, updatedTask) => {
+  const updateTask = () => {
+    if (!newTask.title.trim()) {
+      setError('Task title is required')
+      return
+    }
     setTasks(tasks.map(task => 
-      task.id === id ? { ...task, ...updatedTask } : task
+      task.id === editingTask.id ? { ...task, ...newTask } : task
     ))
+    setIsDialogOpen(false)
     setEditingTask(null)
+    setNewTask({
+      title: '',
+      description: '',
+      priority: 'medium',
+      dueDate: '',
+      category: 'Personal'
+    })
+    setError('')
   }
 
   // Delete task
@@ -159,8 +202,8 @@ export default function Task() {
             </div>
             
             <Button
-              onClick={() => setIsAddingTask(true)}
-              className="flex items-center gap-2 bg-teal-500 hover:bg-teal-600 text-white rounded-xl shadow-lg hover:shadow-teal-500/25 group"
+              onClick={() => openDialog()}
+              className="cursor-pointer flex items-center gap-2 bg-teal-500 hover:bg-teal-600 text-white rounded-md shadow-lg hover:shadow-teal-500/25 group"
             >
               <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-200" />
               Add Task
@@ -266,45 +309,53 @@ export default function Task() {
           </div>
         </div>
 
-        {/* Add Task Form */}
-        {isAddingTask && (
-          <Card className="mb-6 bg-slate-800/50 backdrop-blur-md border-slate-700/50">
-            <CardContent className="p-6">
-              <h3 className="text-xl font-semibold text-white mb-4">Add New Task</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <Input
-                  type="text"
-                  placeholder="Task title..."
-                  value={newTask.title}
-                  onChange={(e) => setNewTask({...newTask, title: e.target.value})}
-                  className="bg-slate-700/50 border-slate-600/50 text-white placeholder:text-slate-400 focus:border-teal-500/50"
-                />
-                
-                <Select
-                  value={newTask.category}
-                  onValueChange={(value) => setNewTask({...newTask, category: value})}
-                >
-                  <SelectTrigger className="bg-slate-700/50 border-slate-600/50 text-white focus:border-teal-500/50">
-                    <SelectValue placeholder="Select Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Personal">Personal</SelectItem>
-                    <SelectItem value="Work">Work</SelectItem>
-                    <SelectItem value="Health">Health</SelectItem>
-                  </SelectContent>
-                </Select>
+        {/* Task Dialog */}
+        <Dialog open={isDialogOpen} onOpenChange={() => {
+          setIsDialogOpen(false)
+          setEditingTask(null)
+          setError('')
+        }}>
+          <DialogContent className="bg-slate-800 backdrop-blur-md border border-slate-700/50 rounded-2xl p-6 w-full max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-semibold text-white flex items-center gap-2">
+                {editingTask ? (
+                  <>
+                    <Edit3 className="w-5 h-5 text-teal-400" />
+                    Edit Task
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-5 h-5 text-teal-400" />
+                    Add New Task
+                  </>
+                )}
+              </DialogTitle>
+            </DialogHeader>
+
+            {error && (
+              <div className="mb-4 p-3 bg-red-500/20 text-red-400 rounded-lg text-sm">
+                {error}
               </div>
+            )}
+
+            <div className="space-y-4">
+              <Input
+                type="text"
+                placeholder="Task title..."
+                value={newTask.title}
+                onChange={(e) => setNewTask({...newTask, title: e.target.value})}
+                className="bg-slate-700/50 border-slate-600/50 text-white placeholder:text-slate-400 focus:border-teal-500/50"
+              />
               
               <Textarea
                 placeholder="Task description..."
                 value={newTask.description}
                 onChange={(e) => setNewTask({...newTask, description: e.target.value})}
                 rows={3}
-                className="mb-4 bg-slate-700/50 border-slate-600/50 text-white placeholder:text-slate-400 focus:border-teal-500/50 resize-none"
+                className="bg-slate-700/50 border-slate-600/50 text-white placeholder:text-slate-400 focus:border-teal-500/50 resize-none"
               />
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Select
                   value={newTask.priority}
                   onValueChange={(value) => setNewTask({...newTask, priority: value})}
@@ -319,6 +370,20 @@ export default function Task() {
                   </SelectContent>
                 </Select>
                 
+                <Select
+                  value={newTask.category}
+                  onValueChange={(value) => setNewTask({...newTask, category: value})}
+                >
+                  <SelectTrigger className="bg-slate-700/50 border-slate-600/50 text-white focus:border-teal-500/50">
+                    <SelectValue placeholder="Select Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Personal">Personal</SelectItem>
+                    <SelectItem value="Work">Work</SelectItem>
+                    <SelectItem value="Health">Health</SelectItem>
+                  </SelectContent>
+                </Select>
+                
                 <Input
                   type="date"
                   value={newTask.dueDate}
@@ -329,14 +394,18 @@ export default function Task() {
               
               <div className="flex gap-3">
                 <Button
-                  onClick={addTask}
+                  onClick={editingTask ? updateTask : addTask}
                   className="flex items-center gap-2 bg-teal-500 hover:bg-teal-600 text-white"
                 >
                   <Check className="w-4 h-4" />
-                  Add Task
+                  {editingTask ? 'Save' : 'Add Task'}
                 </Button>
                 <Button
-                  onClick={() => setIsAddingTask(false)}
+                  onClick={() => {
+                    setIsDialogOpen(false)
+                    setEditingTask(null)
+                    setError('')
+                  }}
                   variant="secondary"
                   className="flex items-center gap-2 bg-slate-600 hover:bg-slate-700 text-white"
                 >
@@ -344,9 +413,9 @@ export default function Task() {
                   Cancel
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-        )}
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Tasks List */}
         <div className="space-y-4">
@@ -371,159 +440,74 @@ export default function Task() {
                 }`}
               >
                 <CardContent className="p-6">
-                  {editingTask === task.id ? (
-                    // Edit Mode
-                    <div className="space-y-4">
-                      <Input
-                        type="text"
-                        value={task.title}
-                        onChange={(e) => setTasks(tasks.map(t => 
-                          t.id === task.id ? {...t, title: e.target.value} : t
-                        ))}
-                        className="bg-slate-700/50 border-slate-600/50 text-white focus:border-teal-500/50"
-                      />
-                      
-                      <Textarea
-                        value={task.description}
-                        onChange={(e) => setTasks(tasks.map(t => 
-                          t.id === task.id ? {...t, description: e.target.value} : t
-                        ))}
-                        rows={3}
-                        className="bg-slate-700/50 border-slate-600/50 text-white focus:border-teal-500/50 resize-none"
-                      />
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <Select
-                          value={task.priority}
-                          onValueChange={(value) => setTasks(tasks.map(t => 
-                            t.id === task.id ? {...t, priority: value} : t
-                          ))}
-                        >
-                          <SelectTrigger className="bg-slate-700/50 border-slate-600/50 text-white focus:border-teal-500/50">
-                            <SelectValue placeholder="Select Priority" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="low">Low Priority</SelectItem>
-                            <SelectItem value="medium">Medium Priority</SelectItem>
-                            <SelectItem value="high">High Priority</SelectItem>
-                          </SelectContent>
-                        </Select>
+                  <div className="flex items-start gap-4">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => toggleTask(task.id)}
+                      className="mt-1 hover:scale-110"
+                    >
+                      {task.completed ? (
+                        <CheckCircle2 className="w-6 h-6 text-teal-400" />
+                      ) : (
+                        <Circle className="w-6 h-6 text-slate-400 hover:text-teal-400" />
+                      )}
+                    </Button>
+                    
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className={`text-lg font-semibold transition-all duration-200 ${
+                          task.completed ? 'text-slate-400 line-through' : 'text-white'
+                        }`}>
+                          {task.title}
+                        </h3>
                         
-                        <Select
-                          value={task.category}
-                          onValueChange={(value) => setTasks(tasks.map(t => 
-                            t.id === task.id ? {...t, category: value} : t
-                          ))}
-                        >
-                          <SelectTrigger className="bg-slate-700/50 border-slate-600/50 text-white focus:border-teal-500/50">
-                            <SelectValue placeholder="Select Category" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Personal">Personal</SelectItem>
-                            <SelectItem value="Work">Work</SelectItem>
-                            <SelectItem value="Health">Health</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        
-                        <Input
-                          type="date"
-                          value={task.dueDate}
-                          onChange={(e) => setTasks(tasks.map(t => 
-                            t.id === task.id ? {...t, dueDate: e.target.value} : t
-                          ))}
-                          className="bg-slate-700/50 border-slate-600/50 text-white focus:border-teal-500/50"
-                        />
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openDialog(task)}
+                            className="hover:bg-slate-700/50"
+                          >
+                            <Edit3 className="w-4 h-4 text-slate-400 hover:text-teal-400" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => deleteTask(task.id)}
+                            className="hover:bg-slate-700/50"
+                          >
+                            <Trash2 className="w-4 h-4 text-slate-400 hover:text-red-400" />
+                          </Button>
+                        </div>
                       </div>
                       
-                      <div className="flex gap-3">
-                        <Button
-                          onClick={() => updateTask(task.id, task)}
-                          className="flex items-center gap-2 bg-teal-500 hover:bg-teal-600 text-white"
-                        >
-                          <Check className="w-4 h-4" />
-                          Save
-                        </Button>
-                        <Button
-                          onClick={() => setEditingTask(null)}
-                          variant="secondary"
-                          className="flex items-center gap-2 bg-slate-600 hover:bg-slate-700 text-white"
-                        >
-                          <X className="w-4 h-4" />
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    // View Mode
-                    <div className="flex items-start gap-4">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => toggleTask(task.id)}
-                        className="mt-1 hover:scale-110"
-                      >
-                        {task.completed ? (
-                          <CheckCircle2 className="w-6 h-6 text-teal-400" />
-                        ) : (
-                          <Circle className="w-6 h-6 text-slate-400 hover:text-teal-400" />
-                        )}
-                      </Button>
+                      {task.description && (
+                        <p className={`mb-3 transition-all duration-200 ${
+                          task.completed ? 'text-slate-500' : 'text-slate-300'
+                        }`}>
+                          {task.description}
+                        </p>
+                      )}
                       
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between mb-2">
-                          <h3 className={`text-lg font-semibold transition-all duration-200 ${
-                            task.completed ? 'text-slate-400 line-through' : 'text-white'
-                          }`}>
-                            {task.title}
-                          </h3>
-                          
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setEditingTask(task.id)}
-                              className="hover:bg-slate-700/50"
-                            >
-                              <Edit3 className="w-4 h-4 text-slate-400 hover:text-teal-400" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => deleteTask(task.id)}
-                              className="hover:bg-slate-700/50"
-                            >
-                              <Trash2 className="w-4 h-4 text-slate-400 hover:text-red-400" />
-                            </Button>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium border ${priorityColors[task.priority]}`}>
+                          {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+                        </span>
+                        
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium border ${categoryColors[task.category]}`}>
+                          {task.category}
+                        </span>
+                        
+                        {task.dueDate && (
+                          <div className="flex items-center gap-1 text-xs text-slate-400">
+                            <Calendar className="w-3 h-3" />
+                            {new Date(task.dueDate).toLocaleDateString()}
                           </div>
-                        </div>
-                        
-                        {task.description && (
-                          <p className={`mb-3 transition-all duration-200 ${
-                            task.completed ? 'text-slate-500' : 'text-slate-300'
-                          }`}>
-                            {task.description}
-                          </p>
                         )}
-                        
-                        <div className="flex flex-wrap items-center gap-3">
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium border ${priorityColors[task.priority]}`}>
-                            {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
-                          </span>
-                          
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium border ${categoryColors[task.category]}`}>
-                            {task.category}
-                          </span>
-                          
-                          {task.dueDate && (
-                            <div className="flex items-center gap-1 text-xs text-slate-400">
-                              <Calendar className="w-3 h-3" />
-                              {new Date(task.dueDate).toLocaleDateString()}
-                            </div>
-                          )}
-                        </div>
                       </div>
                     </div>
-                  )}
+                  </div>
                 </CardContent>
               </Card>
             ))

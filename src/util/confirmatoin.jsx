@@ -19,7 +19,7 @@ const ConfirmDialog = ({ title, message, onConfirm, onCancel }) => {
               Cancel
             </Button>
             <Button className="cursor-pointer" variant="destructive" onClick={onConfirm}>
-              Logout
+              Delete
             </Button>
           </div>
         </CardContent>
