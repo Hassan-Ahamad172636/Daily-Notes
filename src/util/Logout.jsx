@@ -1,10 +1,13 @@
 import { LogOut } from 'lucide-react'
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { toast } from 'sonner'
+// import { toast } from 'sonner'
 import ConfirmDialog from './confirmatoin'
+import { useToast } from "ai-toast";
+
 
 const LogoutButton = () => {
+   const { showToast } = useToast();
   const location = useLocation()
   const navigate = useNavigate()
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -13,9 +16,10 @@ const LogoutButton = () => {
   if (location.pathname !== '/') return null
 
   const handleLogout = () => {
-    localStorage.removeItem('token') // or your token key
-    navigate('/login') // redirect to login page
-    toast.success('User logout!')
+    // localStorage.removeItem('token')
+    // navigate('/login') 
+    // toast.success('User logout!')
+    showToast('User logout successfully!')
   }
 
   return (
